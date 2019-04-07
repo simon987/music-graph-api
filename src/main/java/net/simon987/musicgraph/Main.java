@@ -1,7 +1,7 @@
-package net.simon987;
+package net.simon987.musicgraph;
 
-import net.simon987.logging.LogManager;
-import net.simon987.webapi.Index;
+import net.simon987.musicgraph.logging.LogManager;
+import net.simon987.musicgraph.webapi.Index;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.jackson.JacksonFeature;
@@ -17,6 +17,7 @@ public class Main {
     public static void main(String[] args) {
 
         LOGGER.info("test");
+
         startHttpServer();
     }
 
@@ -25,11 +26,12 @@ public class Main {
         ResourceConfig rc = new ResourceConfig();
 
         rc.registerClasses(Index.class);
+
         rc.registerClasses(JacksonFeature.class);
 
         try {
             HttpServer server = GrizzlyHttpServerFactory.createHttpServer(
-                    new URI("http://localhost:8080/"),
+                    new URI("http://localhost:3030/"),
                     rc);
 
             server.start();

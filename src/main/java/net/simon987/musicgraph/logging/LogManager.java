@@ -1,6 +1,7 @@
-package net.simon987.logging;
+package net.simon987.musicgraph.logging;
 
-import java.util.logging.*;
+import java.util.logging.Handler;
+import java.util.logging.Logger;
 
 public class LogManager {
 

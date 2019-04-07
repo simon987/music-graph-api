@@ -1,6 +1,6 @@
-package net.simon987.webapi;
+package net.simon987.musicgraph.webapi;
 
-import net.simon987.models.ApiInfo;
+import net.simon987.musicgraph.entities.ApiInfo;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -11,8 +11,10 @@ import javax.ws.rs.core.MediaType;
 public class Index {
 
     private static final ApiInfo INFO = new ApiInfo(
-            "music-graph",
-            "0.1"
+            "music-graph-api",
+            "0.1",
+            "http://localhost:3030/application.wadl",
+            "https://github.com/simon987/music-graph-api"
     );
 
     @GET

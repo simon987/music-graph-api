@@ -1,4 +1,4 @@
-package net.simon987.logging;
+package net.simon987.musicgraph.logging;
 
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
