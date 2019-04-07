@@ -1,0 +1,30 @@
+def remote = [:]
+remote.name = 'remote'
+remote.host = env.DEPLOY_HOST
+remote.user = env.DEPLOY_USER
+remote.identityFile = '/var/lib/jenkins/.ssh/id_rsa'
+remote.knownHosts = '/var/lib/jenkins/.ssh/known_hosts'
+remote.allowAnyHosts = true
+remote.retryCount = 3
+remote.retryWaitSec = 3
+logLevel = 'FINER'
+
+pipeline {
+    agent any
+    stages {
+        stage('Build') {
+			steps {
+				sh './jenkins/build.sh'
+			}
+        }
+        stage('Deploy') {
+            steps {
+				sshCommand remote: remote, command: 'rm -rf music_graph_api/target music_graph_api/deploy.sh'
+				sshPut remote: remote, from: 'target', into: 'music_graph_api'
+				sshPut remote: remote, from: 'jenkins/deploy.sh', into: 'music_graph_api/deploy.sh'
+				sshCommand remote: remote, command: 'chmod +x music_graph_api/deploy.sh && ./music_graph_api/deploy.sh'
+            }
+        }
+   	}
+}
+
