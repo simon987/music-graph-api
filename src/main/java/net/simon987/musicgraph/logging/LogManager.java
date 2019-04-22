@@ -1,6 +1,7 @@
 package net.simon987.musicgraph.logging;
 
 import java.util.logging.Handler;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class LogManager {
@@ -14,6 +15,7 @@ public class LogManager {
 
         logger.setUseParentHandlers(false);
         logger.addHandler(handler);
+        logger.setLevel(Level.ALL);
     }
 
     public static Logger getLogger() {

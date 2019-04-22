@@ -1,6 +1,9 @@
 package net.simon987.musicgraph;
 
+import net.simon987.musicgraph.io.*;
 import net.simon987.musicgraph.logging.LogManager;
+import net.simon987.musicgraph.webapi.ArtistController;
+import net.simon987.musicgraph.webapi.CoverController;
 import net.simon987.musicgraph.webapi.Index;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
@@ -12,11 +15,9 @@ import java.util.logging.Logger;
 
 public class Main {
 
-    private final static Logger LOGGER = LogManager.getLogger();
+    private final static Logger logger = LogManager.getLogger();
 
     public static void main(String[] args) {
-
-        LOGGER.info("test");
 
         startHttpServer();
     }
@@ -25,8 +26,12 @@ public class Main {
 
         ResourceConfig rc = new ResourceConfig();
 
-        rc.registerClasses(Index.class);
+        rc.registerInstances(new MusicDatabase());
+        rc.registerInstances(new SQLiteCoverArtDatabase("covers.db"));
 
+        rc.registerClasses(Index.class);
+        rc.registerClasses(ArtistController.class);
+        rc.registerClasses(CoverController.class);
         rc.registerClasses(JacksonFeature.class);
 
         try {
