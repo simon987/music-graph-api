@@ -155,4 +155,49 @@ public class MusicDatabase extends AbstractBinder {
         return relation;
     }
 
+    public ReleaseDetails getReleaseDetails(String mbid) {
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("mbid", mbid);
+
+        try (Session session = driver.session()) {
+
+            StatementResult result = query(session,
+                    "MATCH (release:Release {id: $mbid})-[:CREDITED_FOR]-(a:Artist)\n" +
+                            "OPTIONAL MATCH (release)-[r:IS_TAGGED]->(t:Tag)\n" +
+                            "RETURN release {name:release.name, year:release.year," +
+                            "tags:collect({weight:r.weight, name:t.name}), artist: a.name}\n" +
+                            "LIMIT 1",
+                    params);
+
+            ReleaseDetails details = new ReleaseDetails();
+
+            try {
+
+                if (result.hasNext()) {
+                    Map<String, Object> map = result.next().get("release").asMap();
+
+                    details.mbid = mbid;
+                    details.name = (String) map.get("name");
+                    details.artist = (String) map.get("artist");
+                    details.year = (long) map.get("year");
+                    details.tags.addAll(
+                            ((List<Map>) map.get("tags"))
+                                    .stream()
+                                    .filter(x -> x.get("name") != null)
+                                    .map(x -> new Tag(
+                                            (String) x.get("name"),
+                                            (Long) x.get("weight")
+                                    ))
+                                    .collect(Collectors.toList())
+                    );
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            return details;
+        }
+    }
+
 }

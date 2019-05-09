@@ -1,5 +1,8 @@
 package net.simon987.musicgraph.io;
 
+import java.util.HashMap;
+import java.util.List;
+
 public interface ICoverArtDatabase {
 
     /**
@@ -8,4 +11,6 @@ public interface ICoverArtDatabase {
      * @throws Exception if unexpected error
      */
     byte[] getCover(String mbid) throws Exception;
+
+    HashMap<String, byte[]> getCovers(List<String> mbids) throws Exception;
 }

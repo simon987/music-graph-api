@@ -9,7 +9,7 @@ import java.util.logging.LogRecord;
 
 public class MusicGraphFormatter extends Formatter {
 
-    private static final DateFormat dateFormat = new SimpleDateFormat("MM-dd HH:mm:ss");
+    private static final DateFormat dateFormat = new SimpleDateFormat("yy-MM-dd HH:mm:ss");
 
     @Override
     public String format(LogRecord record) {

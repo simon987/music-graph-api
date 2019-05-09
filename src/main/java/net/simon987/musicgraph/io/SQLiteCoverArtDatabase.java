@@ -4,6 +4,8 @@ import net.simon987.musicgraph.logging.LogManager;
 import org.glassfish.jersey.internal.inject.AbstractBinder;
 
 import java.sql.*;
+import java.util.HashMap;
+import java.util.List;
 import java.util.logging.Logger;
 
 public class SQLiteCoverArtDatabase extends AbstractBinder implements ICoverArtDatabase {
@@ -43,6 +45,33 @@ public class SQLiteCoverArtDatabase extends AbstractBinder implements ICoverArtD
         } catch (SQLException e) {
             logger.severe(String.format("Exception during cover art query mbid=%s ex=%s",
                     mbid, e.getMessage()));
+            throw e;
+        }
+    }
+
+    public HashMap<String, byte[]> getCovers(List<String> mbids) throws SQLException {
+
+        HashMap<String, byte[]> covers = new HashMap<>(mbids.size());
+
+        try {
+            setupConn();
+
+            PreparedStatement stmt = connection.prepareStatement(
+                    //TODO: sqlite injection
+                    String.format("SELECT id, cover FROM covers WHERE id IN ('%s')",
+                            String.join("','", mbids))
+            );
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                covers.put(rs.getString(1), rs.getBytes(2));
+            }
+
+            return covers;
+
+        } catch (SQLException e) {
+            logger.severe(String.format("Exception during cover art query mbid=%s ex=%s",
+                    mbids, e.getMessage()));
             throw e;
         }
     }
