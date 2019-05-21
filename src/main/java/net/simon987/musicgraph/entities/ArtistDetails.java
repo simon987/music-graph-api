@@ -11,6 +11,6 @@ public class ArtistDetails {
     }
 
     public String name;
-    public List<String> releases;
+    public List<Release> releases;
     public List<Tag> tags;
 }

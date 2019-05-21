@@ -26,8 +26,26 @@ public class ArtistController {
     @Produces(MediaType.APPLICATION_JSON)
     public SearchResult getRelated(@PathParam("mbid") String mbid) {
 
-        logger.info(String.format("Searching for %s", mbid));
-        return db.getRelated(mbid);
+        logger.info(String.format("Related for %s", mbid));
+        return db.getRelatedById(mbid);
+    }
+
+    @GET
+    @Path("members/{mbid}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public SearchResult getMembers(@PathParam("mbid") String mbid) {
+
+        logger.info(String.format("Members for %s", mbid));
+        return db.getArtistMembers(mbid);
+    }
+
+    @GET
+    @Path("related_by_name/{name}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public SearchResult getRelatedByName(@PathParam("name") String name) {
+
+        logger.info(String.format("Related for %s", name));
+        return db.getRelatedByName(name);
     }
 
     @GET
