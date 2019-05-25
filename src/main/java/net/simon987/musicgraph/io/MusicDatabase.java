@@ -264,7 +264,7 @@ public class MusicDatabase extends AbstractBinder {
                                     .map(x -> new Tag(
                                             (Long) x.get("id"),
                                             (String) x.get("name"),
-                                            (Long) x.get("weight")
+                                            (Double) x.get("weight")
                                     ))
                                     .collect(Collectors.toList())
                     );

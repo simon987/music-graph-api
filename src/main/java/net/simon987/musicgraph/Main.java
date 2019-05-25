@@ -30,6 +30,7 @@ public class Main {
         rc.registerClasses(Index.class);
         rc.registerClasses(ArtistController.class);
         rc.registerClasses(CoverController.class);
+        rc.registerClasses(ReleaseController.class);
         rc.registerClasses(ChartController.class);
         rc.registerClasses(JacksonFeature.class);
 
