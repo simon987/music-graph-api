@@ -53,8 +53,8 @@ public class MusicDatabase extends AbstractBinder {
             params.put("mbid", mbid);
 
             StatementResult result = query(session,
-                    "MATCH (a:Artist)-[r]-(b)\n" +
-                            "WHERE a.id = $mbid AND NOT type(r) = \"IS_RELATED_TO\"\n" +
+                    "MATCH (a:Artist)-[r:IS_MEMBER_OF]-(b:Artist) " +
+                            "WHERE a.id = $mbid " +
                             "RETURN a as artist, a {rels: collect(DISTINCT r), nodes: collect(DISTINCT b)} as rank1\n" +
                             "LIMIT 1",
                     params);
@@ -79,9 +79,9 @@ public class MusicDatabase extends AbstractBinder {
 
             StatementResult result = query(session,
                     "MATCH (a:Artist {id: $mbid})-[:CREDITED_FOR]->(r:Release)\n" +
-                            "WITH collect({id:r.id, name:r.name, year:r.year}) as releases, a\n" +
+                            "WITH collect({id: ID(r), mbid:r.id, name:r.name, year:r.year, labels:labels(r)}) as releases, a\n" +
                             "OPTIONAL MATCH (a)-[r:IS_TAGGED]->(t:Tag)\n" +
-                            "RETURN a {name:a.name, releases:releases, tags:collect({weight: r.weight, name: t.name})}\n" +
+                            "RETURN a {name:a.name, releases:releases, tags:collect({weight: r.weight, name: t.name, id:ID(t)})}\n" +
                             "LIMIT 1",
                     params);
 
@@ -97,9 +97,11 @@ public class MusicDatabase extends AbstractBinder {
                             ((List<Map>) map.get("releases"))
                                     .stream()
                                     .map(x -> new Release(
-                                            (String) x.get("id"),
+                                            (List<String>) x.get("labels"),
+                                            (String) x.get("mbid"),
                                             (String) x.get("name"),
-                                            (Long) x.get("year")
+                                            (Long) x.get("year"),
+                                            (Long) x.get("id")
                                     )).collect(Collectors.toList())
 
                     );
@@ -108,8 +110,9 @@ public class MusicDatabase extends AbstractBinder {
                                     .stream()
                                     .filter(x -> x.get("name") != null)
                                     .map(x -> new Tag(
+                                            (Long) x.get("id"),
                                             (String) x.get("name"),
-                                            (Long) x.get("weight")
+                                            (Double) x.get("weight")
                                     ))
                                     .collect(Collectors.toList())
                     );
@@ -239,7 +242,7 @@ public class MusicDatabase extends AbstractBinder {
                     "MATCH (release:Release {id: $mbid})-[:CREDITED_FOR]-(a:Artist)\n" +
                             "OPTIONAL MATCH (release)-[r:IS_TAGGED]->(t:Tag)\n" +
                             "RETURN release {name:release.name, year:release.year," +
-                            "tags:collect({weight:r.weight, name:t.name}), artist: a.name}\n" +
+                            "tags:collect({weight:r.weight, name:t.name, id:ID(t)}), artist: a.name}\n" +
                             "LIMIT 1",
                     params);
 
@@ -259,6 +262,7 @@ public class MusicDatabase extends AbstractBinder {
                                     .stream()
                                     .filter(x -> x.get("name") != null)
                                     .map(x -> new Tag(
+                                            (Long) x.get("id"),
                                             (String) x.get("name"),
                                             (Long) x.get("weight")
                                     ))

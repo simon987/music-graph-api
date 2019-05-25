@@ -44,6 +44,7 @@ public class ArtistController {
     @Produces(MediaType.APPLICATION_JSON)
     public SearchResult getRelatedByName(@PathParam("name") String name) {
 
+        name = name.replace('+', ' ');
         logger.info(String.format("Related for %s", name));
         return db.getRelatedByName(name);
     }
