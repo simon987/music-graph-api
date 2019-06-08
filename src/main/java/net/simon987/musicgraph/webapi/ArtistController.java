@@ -4,6 +4,7 @@ import net.simon987.musicgraph.entities.ArtistDetails;
 import net.simon987.musicgraph.io.MusicDatabase;
 import net.simon987.musicgraph.entities.SearchResult;
 import net.simon987.musicgraph.logging.LogManager;
+import org.checkerframework.checker.units.qual.A;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -40,21 +41,22 @@ public class ArtistController {
     }
 
     @GET
-    @Path("related_by_name/{name}")
-    @Produces(MediaType.APPLICATION_JSON)
-    public SearchResult getRelatedByName(@PathParam("name") String name) {
-
-        name = name.replace('+', ' ');
-        logger.info(String.format("Related for %s", name));
-        return db.getRelatedByName(name);
-    }
-
-    @GET
     @Path("details/{mbid}")
     @Produces(MediaType.APPLICATION_JSON)
     public ArtistDetails getDetails(@PathParam("mbid") String mbid) {
 
         logger.info(String.format("Details for %s", mbid));
         return db.getArtistDetails(mbid);
+    }
+
+    @GET
+    @Path("autocomplete/{prefix}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public AutoCompleteData autoComplete(@PathParam("prefix") String prefix) {
+
+        prefix = prefix.replace('+', ' ');
+        logger.info(String.format("Autocomplete for '%s'", prefix));
+
+        return db.autoComplete(prefix);
     }
 }

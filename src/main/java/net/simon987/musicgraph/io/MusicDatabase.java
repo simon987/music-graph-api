@@ -3,6 +3,8 @@ package net.simon987.musicgraph.io;
 import com.google.common.collect.ImmutableList;
 import net.simon987.musicgraph.entities.*;
 import net.simon987.musicgraph.logging.LogManager;
+import net.simon987.musicgraph.webapi.ArtistOverview;
+import net.simon987.musicgraph.webapi.AutoCompleteData;
 import org.glassfish.jersey.internal.inject.AbstractBinder;
 import org.neo4j.driver.v1.*;
 import org.neo4j.driver.v1.types.Node;
@@ -152,35 +154,6 @@ public class MusicDatabase extends AbstractBinder {
             return null;
         }
     }
-
-    public SearchResult getRelatedByName(String name) {
-
-        try (Session session = driver.session()) {
-
-            Map<String, Object> params = new HashMap<>();
-            params.put("name", name);
-
-            StatementResult result = query(session,
-                    "MATCH (a:Artist)-[r:IS_RELATED_TO]-(b)\n" +
-                            "WHERE a.name = $name\n" +
-                            // Only match artists with > 0 releases
-                            "MATCH (b)-[:CREDITED_FOR]->(:Release)\n" +
-                            "WHERE r.weight > 0.25\n" +
-                            "RETURN a as artist, a {rels: collect(DISTINCT r), nodes: collect(DISTINCT b)} as rank1\n" +
-                            "LIMIT 1",
-                    params);
-
-            SearchResult out = new SearchResult();
-
-            parseRelatedResult(result, out);
-
-            return out;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
     private void parseRelatedResult(StatementResult result, SearchResult out) {
         long start = System.nanoTime();
         while (result.hasNext()) {
@@ -274,6 +247,38 @@ public class MusicDatabase extends AbstractBinder {
             }
 
             return details;
+        }
+    }
+
+    public AutoCompleteData autoComplete(String prefix) {
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("prefix", prefix);
+
+        try (Session session = driver.session()) {
+
+            StatementResult result = query(session,
+                    "MATCH (a:Artist) " +
+                            "WHERE a.sortname STARTS WITH $prefix " +
+                            "RETURN a ORDER BY a.listeners DESC " +
+                            "LIMIT 30",
+                    params);
+
+            AutoCompleteData data = new AutoCompleteData();
+
+            while (result.hasNext()) {
+                Map<String, Object> map = result.next().get("a").asMap();
+
+                ArtistOverview a = new ArtistOverview();
+                a.name = (String) map.get("name");
+                a.comment = (String) map.get("comment");
+                a.year = (long) map.get("year");
+                a.mbid = (String) map.get("id");
+
+                data.artists.add(a);
+            }
+
+            return data;
         }
     }
 
