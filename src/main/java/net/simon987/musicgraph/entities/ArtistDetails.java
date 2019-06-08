@@ -11,6 +11,8 @@ public class ArtistDetails {
     }
 
     public String name;
+    public String comment;
+    public long year;
     public List<Release> releases;
     public List<Tag> tags;
 }

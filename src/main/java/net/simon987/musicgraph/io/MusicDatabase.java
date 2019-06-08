@@ -83,7 +83,7 @@ public class MusicDatabase extends AbstractBinder {
                     "MATCH (a:Artist {id: $mbid})-[:CREDITED_FOR]->(r:Release)\n" +
                             "WITH collect({id: ID(r), mbid:r.id, name:r.name, year:r.year, labels:labels(r)}) as releases, a\n" +
                             "OPTIONAL MATCH (a)-[r:IS_TAGGED]->(t:Tag)\n" +
-                            "RETURN a {name:a.name, releases:releases, tags:collect({weight: r.weight, name: t.name, id:ID(t)})}\n" +
+                            "RETURN a {name:a.name, year:a.year, comment:a.comment, releases:releases, tags:collect({weight: r.weight, name: t.name, id:ID(t)})}\n" +
                             "LIMIT 1",
                     params);
 
@@ -95,6 +95,8 @@ public class MusicDatabase extends AbstractBinder {
                     Map<String, Object> map = result.next().get("a").asMap();
 
                     details.name = (String) map.get("name");
+                    details.comment = (String) map.get("comment");
+                    details.year = (long) map.get("year");
                     details.releases.addAll(
                             ((List<Map>) map.get("releases"))
                                     .stream()
