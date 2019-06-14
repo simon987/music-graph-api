@@ -142,7 +142,7 @@ public class MusicDatabase extends AbstractBinder {
                             // Only match artists with > 0 releases
                             "MATCH (b)-[:CREDITED_FOR]->(:Release)\n" +
                             "WHERE r.weight > 0.25\n" +
-                            "RETURN a as artist, a {rels: collect(DISTINCT r), nodes: collect(DISTINCT b)} as rank1\n" +
+                            "RETURN a as artist, {rels: collect(DISTINCT r), nodes: collect(DISTINCT b)} as rank1\n" +
                             "LIMIT 1",
                     params);
 
@@ -156,29 +156,60 @@ public class MusicDatabase extends AbstractBinder {
             return null;
         }
     }
+
+    public TagSearchResult getRelatedByTag(long id) {
+
+        try (Session session = driver.session()) {
+
+            Map<String, Object> params = new HashMap<>();
+            params.put("tag_id", id);
+
+            StatementResult result = query(session,
+                    "MATCH (t:Tag)-[r:IS_TAGGED]-(a:Artist)\n" +
+                            "WHERE ID(t) = $tag_id\n" +
+                            "RETURN t, {rels: collect(DISTINCT r), nodes: collect(DISTINCT a)} as rank1\n" +
+                            "LIMIT 1",
+                    params);
+
+            TagSearchResult out = new TagSearchResult();
+
+            if (result.hasNext()) {
+                Record row = result.next();
+                out.tag = makeTag(row.get(0).asNode());
+                artistsFromRelMap(out, row.get(1).asMap());
+            }
+
+            return out;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     private void parseRelatedResult(StatementResult result, SearchResult out) {
         long start = System.nanoTime();
-        while (result.hasNext()) {
+        if (result.hasNext()) {
             Record row = result.next();
             out.artists.add(makeArtist(row.get(0).asNode()));
 
-            var rank1 = row.get(1).asMap();
-
-            out.relations.addAll(((List<Relationship>) rank1.get("rels"))
-                    .stream()
-                    .map(MusicDatabase::makeRelation)
-                    .collect(Collectors.toList()
-                    ));
-            out.artists.addAll(((List<Node>) rank1.get("nodes"))
-                    .stream()
-                    .map(MusicDatabase::makeArtist)
-                    .collect(Collectors.toList()
-                    ));
-
+            artistsFromRelMap(out, row.get(1).asMap());
         }
         long end = System.nanoTime();
         long took = (end - start) / 1000000;
         logger.info(String.format("Fetched search result (Took %dms)", took));
+    }
+
+    private void artistsFromRelMap(SearchResult out, Map<String, Object> rank1) {
+        out.relations.addAll(((List<Relationship>) rank1.get("rels"))
+                .stream()
+                .map(MusicDatabase::makeRelation)
+                .collect(Collectors.toList()
+                ));
+        out.artists.addAll(((List<Node>) rank1.get("nodes"))
+                .stream()
+                .map(MusicDatabase::makeArtist)
+                .collect(Collectors.toList()
+                ));
     }
 
     private static Artist makeArtist(Node node) {
@@ -192,6 +223,14 @@ public class MusicDatabase extends AbstractBinder {
             artist.playCount = node.get("playcount").asInt();
         }
         return artist;
+    }
+
+    private static Tag makeTag(Node node) {
+        return new Tag(
+                node.id(),
+                node.get("name").asString(),
+                0
+        );
     }
 
     private static Relation makeRelation(Relationship rel) {
