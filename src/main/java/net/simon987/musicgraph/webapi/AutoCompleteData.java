@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AutoCompleteData {
-    public List<ArtistOverview> artists;
+    public List<AutocompleteLine> lines;
 
     public AutoCompleteData() {
-        artists = new ArrayList<>(30);
+        lines = new ArrayList<>(30);
     }
 }

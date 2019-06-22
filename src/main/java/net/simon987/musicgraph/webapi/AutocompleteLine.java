@@ -1,8 +1,9 @@
 package net.simon987.musicgraph.webapi;
 
-public class ArtistOverview {
+public class AutocompleteLine {
     public String name;
-    public String mbid;
+    public String type;
+    public String id;
     public String comment;
     public long year;
 }

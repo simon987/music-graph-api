@@ -1,6 +1,6 @@
 package net.simon987.musicgraph.webapi;
 
-import net.simon987.musicgraph.entities.RelatedTags;
+import net.simon987.musicgraph.entities.RelatedLabels;
 import net.simon987.musicgraph.entities.SearchResult;
 import net.simon987.musicgraph.io.MusicDatabase;
 import net.simon987.musicgraph.logging.LogManager;
@@ -13,15 +13,15 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import java.util.logging.Logger;
 
-@Path("/tag")
-public class TagController {
+@Path("/label")
+public class LabelController {
 
     private static Logger logger = LogManager.getLogger();
 
     @Inject
     private MusicDatabase db;
 
-    public TagController() {
+    public LabelController() {
     }
 
     @GET
@@ -29,16 +29,16 @@ public class TagController {
     @Produces(MediaType.APPLICATION_JSON)
     public SearchResult getRelated(@PathParam("id") long id) {
 
-        logger.info(String.format("Related artists for tag %d", id));
-        return db.getRelatedByTag(id);
+        logger.info(String.format("Related artist for label %d", id));
+        return db.getRelatedByLabel(id);
     }
 
     @GET
-    @Path("tag/{id}")
+    @Path("label/{id}")
     @Produces(MediaType.APPLICATION_JSON)
-    public RelatedTags getRelatedTag(@PathParam("id") long id) {
+    public RelatedLabels getRelatedLabel(@PathParam("id") long id) {
 
-        logger.info(String.format("Related tags for tag %d", id));
-        return db.getRelatedTagByTag(id);
+        logger.info(String.format("Related labels for label %d", id));
+        return db.getRelatedLabelByLabel(id);
     }
 }

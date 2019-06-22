@@ -29,6 +29,7 @@ public class Main {
 
         rc.registerClasses(Index.class);
         rc.registerClasses(ArtistController.class);
+        rc.registerClasses(AutocompleteController.class);
         rc.registerClasses(CoverController.class);
         rc.registerClasses(TagController.class);
         rc.registerClasses(ReleaseController.class);

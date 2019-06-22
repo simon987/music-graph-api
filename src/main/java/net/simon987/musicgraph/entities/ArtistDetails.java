@@ -5,14 +5,16 @@ import java.util.List;
 
 public class ArtistDetails {
 
-    public ArtistDetails() {
-        releases = new ArrayList<>();
-        tags = new ArrayList<>();
-    }
-
     public String name;
     public String comment;
     public long year;
     public List<Release> releases;
-    public List<Tag> tags;
+    public List<WeightedTag> tags;
+    public List<Label> labels;
+
+    public ArtistDetails() {
+        releases = new ArrayList<>();
+        tags = new ArrayList<>();
+        labels = new ArrayList<>();
+    }
 }

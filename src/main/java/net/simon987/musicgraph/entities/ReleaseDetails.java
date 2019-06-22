@@ -9,7 +9,7 @@ public class ReleaseDetails {
     public String mbid;
     public String artist;
     public long year;
-    public List<Tag> tags;
+    public List<WeightedTag> tags;
 
     public ReleaseDetails() {
         this.tags = new ArrayList<>();

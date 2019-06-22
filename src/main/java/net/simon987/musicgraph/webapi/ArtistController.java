@@ -49,14 +49,4 @@ public class ArtistController {
         return db.getArtistDetails(mbid);
     }
 
-    @GET
-    @Path("autocomplete/{prefix}")
-    @Produces(MediaType.APPLICATION_JSON)
-    public AutoCompleteData autoComplete(@PathParam("prefix") String prefix) {
-
-        prefix = prefix.replace('+', ' ');
-        logger.info(String.format("Autocomplete for '%s'", prefix));
-
-        return db.autoComplete(prefix);
-    }
 }
