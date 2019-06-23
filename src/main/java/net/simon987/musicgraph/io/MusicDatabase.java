@@ -80,7 +80,8 @@ public class MusicDatabase extends AbstractBinder {
         try (Session session = driver.session()) {
 
             StatementResult result = query(session,
-                    "MATCH (a:Artist {id: $mbid})-[:CREDITED_FOR]->(r:Release)\n" +
+                    "MATCH (a:Artist {id: $mbid})" +
+                            "WITH a OPTIONAL MATCH (a)-[:CREDITED_FOR]->(r:Release)\n" +
                             "WITH collect({id: ID(r), mbid:r.id, name:r.name, year:r.year, labels:labels(r)}) as releases, a\n" +
                             "OPTIONAL MATCH (a)-[r:IS_TAGGED]->(t:Tag)\n" +
                             "WITH collect({weight: r.weight, name: t.name, id:ID(t)}) as tags, a, releases\n" +
@@ -150,10 +151,9 @@ public class MusicDatabase extends AbstractBinder {
             params.put("mbid", mbid);
 
             StatementResult result = query(session,
-                    "MATCH (a:Artist)-[r:IS_RELATED_TO]-(b)\n" +
+                    "MATCH (a:Artist)\n" +
                             "WHERE a.id = $mbid\n" +
-                            // Only match artists with > 0 releases
-                            "MATCH (b)-[:CREDITED_FOR]->(:Release)\n" +
+                            "WITH a OPTIONAL MATCH (a)-[r:IS_RELATED_TO]-(b)" +
                             "WHERE r.weight > 0.15\n" +
                             "RETURN a as artist, {rels: collect(DISTINCT r), nodes: collect(DISTINCT b)} as rank1\n" +
                             "LIMIT 1",
