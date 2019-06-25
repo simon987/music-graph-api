@@ -11,6 +11,7 @@ public class ArtistDetails {
     public List<Release> releases;
     public List<WeightedTag> tags;
     public List<Label> labels;
+    public SpotifyPreviewUrl[] spotifyPreviewUrls;
 
     public ArtistDetails() {
         releases = new ArrayList<>();

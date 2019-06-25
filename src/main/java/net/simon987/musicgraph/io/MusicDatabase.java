@@ -1,10 +1,11 @@
 package net.simon987.musicgraph.io;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import net.simon987.musicgraph.entities.*;
 import net.simon987.musicgraph.logging.LogManager;
-import net.simon987.musicgraph.webapi.AutocompleteLine;
 import net.simon987.musicgraph.webapi.AutoCompleteData;
+import net.simon987.musicgraph.webapi.AutocompleteLine;
 import org.glassfish.jersey.internal.inject.AbstractBinder;
 import org.neo4j.driver.v1.*;
 import org.neo4j.driver.v1.types.Node;
@@ -41,7 +42,7 @@ public class MusicDatabase extends AbstractBinder {
         long end = System.nanoTime();
         long took = (end - start) / 1000000;
 
-        logger.info(String.format("Query %s (Took %dms)", query.replace('\n', ' '), took));
+        logger.info(String.format("Query %s (Took %dms)", query, took));
 
         return result;
     }
@@ -57,7 +58,7 @@ public class MusicDatabase extends AbstractBinder {
             StatementResult result = query(session,
                     "MATCH (a:Artist)-[r:IS_MEMBER_OF]-(b:Artist) " +
                             "WHERE a.id = $mbid " +
-                            "RETURN a as artist, a {rels: collect(DISTINCT r), nodes: collect(DISTINCT b)} as rank1\n" +
+                            "RETURN a as artist, a {rels: collect(DISTINCT r), nodes: collect(DISTINCT b)} as rank1 " +
                             "LIMIT 1",
                     params);
 
@@ -81,12 +82,13 @@ public class MusicDatabase extends AbstractBinder {
 
             StatementResult result = query(session,
                     "MATCH (a:Artist {id: $mbid})" +
-                            "WITH a OPTIONAL MATCH (a)-[:CREDITED_FOR]->(r:Release)\n" +
-                            "WITH collect({id: ID(r), mbid:r.id, name:r.name, year:r.year, labels:labels(r)}) as releases, a\n" +
-                            "OPTIONAL MATCH (a)-[r:IS_TAGGED]->(t:Tag)\n" +
-                            "WITH collect({weight: r.weight, name: t.name, id:ID(t)}) as tags, a, releases\n" +
-                            "OPTIONAL MATCH (a)-[r:CREDITED_FOR]->(:Release)-[]-(l:Label)\n" +
-                            "RETURN a {name:a.name, year:a.year, comment:a.comment, releases:releases, tags:tags, labels:collect(DISTINCT {id:ID(l),mbid:l.id,name:l.name})} \n" +
+                            "WITH a OPTIONAL MATCH (a)-[:CREDITED_FOR]->(r:Release) " +
+                            "WITH collect({id: ID(r), mbid:r.id, name:r.name, year:r.year, labels:labels(r)}) as releases, a " +
+                            "OPTIONAL MATCH (a)-[r:IS_TAGGED]->(t:Tag) " +
+                            "WITH collect({weight: r.weight, name: t.name, id:ID(t)}) as tags, a, releases " +
+                            "OPTIONAL MATCH (a)-[r:CREDITED_FOR]->(:Release)-[]-(l:Label) " +
+                            "RETURN a {name:a.name, year:a.year, comment:a.comment, releases:releases, tags:tags," +
+                            " track_previews:a.track_previews, labels:collect(DISTINCT {id:ID(l),mbid:l.id,name:l.name})} " +
                             "LIMIT 1",
                     params);
 
@@ -103,6 +105,7 @@ public class MusicDatabase extends AbstractBinder {
                     details.releases.addAll(
                             ((List<Map>) map.get("releases"))
                                     .stream()
+                                    .filter(x -> x.get("name") != null)
                                     .map(x -> new Release(
                                             (List<String>) x.get("labels"),
                                             (String) x.get("mbid"),
@@ -134,6 +137,13 @@ public class MusicDatabase extends AbstractBinder {
                                     ))
                                     .collect(Collectors.toList())
                     );
+                    String preview_urls = (String) map.get("track_previews");
+                    if (preview_urls != null) {
+                        ObjectMapper mapper = new ObjectMapper();
+                        details.spotifyPreviewUrls = mapper.readValue(preview_urls, SpotifyPreviewUrl[].class);
+                    } else {
+                        details.spotifyPreviewUrls = new SpotifyPreviewUrl[0];
+                    }
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -151,11 +161,11 @@ public class MusicDatabase extends AbstractBinder {
             params.put("mbid", mbid);
 
             StatementResult result = query(session,
-                    "MATCH (a:Artist)\n" +
-                            "WHERE a.id = $mbid\n" +
+                    "MATCH (a:Artist) " +
+                            "WHERE a.id = $mbid " +
                             "WITH a OPTIONAL MATCH (a)-[r:IS_RELATED_TO]-(b)" +
-                            "WHERE r.weight > 0.15\n" +
-                            "RETURN a as artist, {rels: collect(DISTINCT r), nodes: collect(DISTINCT b)} as rank1\n" +
+                            "WHERE r.weight > 0.15 " +
+                            "RETURN a as artist, {rels: collect(DISTINCT r), nodes: collect(DISTINCT b)} as rank1 " +
                             "LIMIT 1",
                     params);
 
@@ -178,10 +188,10 @@ public class MusicDatabase extends AbstractBinder {
             params.put("tag_id", id);
 
             StatementResult result = query(session,
-                    "MATCH (t:Tag)-[r:IS_TAGGED]-(a:Artist)\n" +
-                            "WHERE ID(t) = $tag_id\n" +
+                    "MATCH (t:Tag)-[r:IS_TAGGED]-(a:Artist) " +
+                            "WHERE ID(t) = $tag_id " +
                             // Is rels really necessary?
-                            "RETURN t, {rels: collect(DISTINCT r), nodes: collect(DISTINCT a)} as rank1\n" +
+                            "RETURN t, {rels: collect(DISTINCT r), nodes: collect(DISTINCT a)} as rank1 " +
                             "LIMIT 1",
                     params);
 
@@ -386,10 +396,10 @@ public class MusicDatabase extends AbstractBinder {
         try (Session session = driver.session()) {
 
             StatementResult result = query(session,
-                    "MATCH (release:Release {id: $mbid})-[:CREDITED_FOR]-(a:Artist)\n" +
-                            "OPTIONAL MATCH (release)-[r:IS_TAGGED]->(t:Tag)\n" +
+                    "MATCH (release:Release {id: $mbid})-[:CREDITED_FOR]-(a:Artist) " +
+                            "OPTIONAL MATCH (release)-[r:IS_TAGGED]->(t:Tag) " +
                             "RETURN release {name:release.name, year:release.year," +
-                            "tags:collect({weight:r.weight, name:t.name, id:ID(t)}), artist: a.name}\n" +
+                            "tags:collect({weight:r.weight, name:t.name, id:ID(t)}), artist: a.name} " +
                             "LIMIT 1",
                     params);
 
@@ -473,7 +483,7 @@ public class MusicDatabase extends AbstractBinder {
                 if (data.lines.size() > 0) {
                     for (int i = 0; i < data.lines.size(); i++) {
                         if (data.lines.get(i).name.toLowerCase().compareTo(line.name) > 0) {
-                            data.lines.add(i+1, line);
+                            data.lines.add(i + 1, line);
                             break;
                         }
                     }
