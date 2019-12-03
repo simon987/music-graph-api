@@ -6,6 +6,7 @@ import org.glassfish.jersey.internal.inject.AbstractBinder;
 import java.sql.*;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Properties;
 import java.util.logging.Logger;
 
 public class SQLiteCoverArtDatabase extends AbstractBinder implements ICoverArtDatabase {
@@ -77,14 +78,17 @@ public class SQLiteCoverArtDatabase extends AbstractBinder implements ICoverArtD
     }
 
     private void setupConn() throws SQLException {
+        Properties config = new Properties();
+        config.setProperty("open_mode", "1");
+
         try {
             if (connection == null || connection.isClosed()) {
                 logger.fine("Connecting to SQLite cover art DB");
-                connection = DriverManager.getConnection("jdbc:sqlite:" + dbFile);
+                connection = DriverManager.getConnection("jdbc:sqlite:" + dbFile, config);
             }
         } catch (SQLException e) {
             logger.fine("Connecting to SQLite cover art DB");
-            connection = DriverManager.getConnection("jdbc:sqlite:" + dbFile);
+            connection = DriverManager.getConnection("jdbc:sqlite:" + dbFile, config);
         }
     }
 }
