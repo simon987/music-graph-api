@@ -49,4 +49,13 @@ public class ArtistController {
         return db.getArtistDetails(mbid);
     }
 
+    @GET
+    @Path("path/{idFrom}/{idTo}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public SearchResult getPath(@PathParam("idFrom") String idFrom, @PathParam("idTo") String idTo) {
+
+        logger.info(String.format("Path from %s to %s", idFrom, idTo));
+        return db.getPath(idFrom, idTo);
+    }
+
 }

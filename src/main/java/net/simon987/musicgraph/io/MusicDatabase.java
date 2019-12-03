@@ -12,6 +12,7 @@ import org.neo4j.driver.v1.types.Node;
 import org.neo4j.driver.v1.types.Relationship;
 
 import javax.inject.Singleton;
+import javax.validation.constraints.Max;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +23,7 @@ import java.util.stream.Collectors;
 public class MusicDatabase extends AbstractBinder {
 
     private Driver driver;
+    private static final int MaxShortestPaths = 5;
 
     private static Logger logger = LogManager.getLogger();
 
@@ -85,7 +87,7 @@ public class MusicDatabase extends AbstractBinder {
                             "WITH a OPTIONAL MATCH (a)-[:CREDITED_FOR]->(r:Release) " +
                             "WITH collect({id: ID(r), mbid:r.id, name:r.name, year:r.year, labels:labels(r)}) as releases, a " +
                             "OPTIONAL MATCH (a)-[r:IS_TAGGED]->(t:Tag) " +
-                            "WITH collect({weight: r.weight, name: t.name, id:ID(t)}) as tags, a, releases " +
+                            "WITH collect({weight: r.weight, name: t.name, id:ID(t), tagid:t.id}) as tags, a, releases " +
                             "OPTIONAL MATCH (a)-[r:CREDITED_FOR]->(:Release)-[]-(l:Label) " +
                             "RETURN a {name:a.name, year:a.year, comment:a.comment, releases:releases, tags:tags," +
                             " track_previews:a.track_previews, labels:collect(DISTINCT {id:ID(l),mbid:l.id,name:l.name})} " +
@@ -121,6 +123,7 @@ public class MusicDatabase extends AbstractBinder {
                                     .filter(x -> x.get("name") != null)
                                     .map(x -> new WeightedTag(
                                             (Long) x.get("id"),
+                                            Long.valueOf((String) x.get("tagid")),
                                             (String) x.get("name"),
                                             (Double) x.get("weight")
                                     ))
@@ -163,15 +166,45 @@ public class MusicDatabase extends AbstractBinder {
             StatementResult result = query(session,
                     "MATCH (a:Artist) " +
                             "WHERE a.id = $mbid " +
-                            "WITH a OPTIONAL MATCH (a)-[r:IS_RELATED_TO]-(b)" +
+                            "WITH a OPTIONAL MATCH (a)-[r:IS_RELATED_TO]-(b) " +
                             "WHERE r.weight > 0.15 " +
-                            "RETURN a as artist, {rels: collect(DISTINCT r), nodes: collect(DISTINCT b)} as rank1 " +
+                            "RETURN a as artist, {rels: collect(r), nodes: collect(b)} as rank1 " +
                             "LIMIT 1",
                     params);
 
             SearchResult out = new SearchResult();
 
             parseRelatedResult(result, out);
+
+            return out;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public SearchResult getPath(String idFrom, String idTo) {
+
+        try (Session session = driver.session()) {
+
+            Map<String, Object> params = new HashMap<>();
+            params.put("idFrom", idFrom);
+            params.put("idTo", idTo);
+
+            StatementResult result = query(session,
+                    "MATCH p = allShortestPaths(" +
+                            "(:Artist {id: $idFrom})-[r:IS_RELATED_TO*..10]-(:Artist {id:$idTo})) " +
+                            "WHERE ALL (rel in r WHERE rel.weight > 0.10) " +
+                            "return {rels: relationships(p), nodes: nodes(p)} as rank1",
+                    params);
+
+            SearchResult out = new SearchResult();
+            int count = 0;
+            while (result.hasNext() && count <= MaxShortestPaths) {
+                Record row = result.next();
+                artistsFromRelMap(out, row.get(0).asMap());
+                count += 1;
+            }
 
             return out;
         } catch (Exception e) {
@@ -364,6 +397,7 @@ public class MusicDatabase extends AbstractBinder {
     private static Tag makeTag(Node node) {
         return new Tag(
                 node.id(),
+                Long.valueOf(node.get("id").asString()),
                 node.get("name").asString()
         );
     }
@@ -399,7 +433,7 @@ public class MusicDatabase extends AbstractBinder {
                     "MATCH (release:Release {id: $mbid})-[:CREDITED_FOR]-(a:Artist) " +
                             "OPTIONAL MATCH (release)-[r:IS_TAGGED]->(t:Tag) " +
                             "RETURN release {name:release.name, year:release.year," +
-                            "tags:collect({weight:r.weight, name:t.name, id:ID(t)}), artist: a.name} " +
+                            "tags:collect({weight:r.weight, name:t.name, id:ID(t), tagid:t.id}), artist: a.name} " +
                             "LIMIT 1",
                     params);
 
@@ -420,6 +454,7 @@ public class MusicDatabase extends AbstractBinder {
                                     .filter(x -> x.get("name") != null)
                                     .map(x -> new WeightedTag(
                                             (Long) x.get("id"),
+                                            Long.valueOf((String) x.get("tagid")),
                                             (String) x.get("name"),
                                             (Double) x.get("weight")
                                     ))

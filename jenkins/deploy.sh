@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 export MGROOT="music_graph_api"
-export JAVA="/usr/lib/jvm/java-11-oracle"
+export JAVA="/usr/lib/jvm/java-11-openjdk-amd64"
 
 screen -S mg_api -X quit
 screen -S mg_api -d -m bash -c "cd ${MGROOT}  && ${JAVA}/bin/java -jar target/music-graph-*-jar-with-dependencies.jar 2> stderr.txt"
