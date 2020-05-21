@@ -33,7 +33,7 @@ public class MusicDatabase extends AbstractBinder {
     }
 
     public MusicDatabase() {
-        driver = GraphDatabase.driver("bolt://localhost:7687",
+        driver = GraphDatabase.driver("bolt://" + System.getenv("NEO4J_ADDR"),
                 AuthTokens.basic("neo4j", "neo4j"));
     }
 

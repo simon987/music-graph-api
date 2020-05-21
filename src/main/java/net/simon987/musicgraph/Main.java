@@ -40,7 +40,7 @@ public class Main {
 
         try {
             HttpServer server = GrizzlyHttpServerFactory.createHttpServer(
-                    new URI("http://localhost:3030/"),
+                    new URI("http://0.0.0.0:3030/"),
                     rc);
 
             server.start();
