@@ -16,7 +16,7 @@ import java.util.logging.Logger;
 @Path("/label")
 public class LabelController {
 
-    private static Logger logger = LogManager.getLogger();
+    private static final Logger logger = LogManager.getLogger();
 
     @Inject
     private MusicDatabase db;

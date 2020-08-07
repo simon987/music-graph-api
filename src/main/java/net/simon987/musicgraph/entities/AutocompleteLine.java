@@ -1,4 +1,4 @@
-package net.simon987.musicgraph.webapi;
+package net.simon987.musicgraph.entities;
 
 public class AutocompleteLine {
     public String name;

@@ -23,9 +23,13 @@ public class Main {
 
         ResourceConfig rc = new ResourceConfig();
 
+        String pgUrl = System.getenv("PG_URL");
+        String pgUsername = System.getenv("PG_USERNAME");
+        String pgPassword = System.getenv("PG_PASSWORD");
+
         rc.registerInstances(new MusicDatabase());
-        rc.registerInstances(new SQLiteCoverArtDatabase("covers.db"));
-        rc.registerInstances(new MagickChartBuilder("/dev/shm/im_chart/"));
+        rc.registerInstances(new PostgreSQLCoverArtDatabase(pgUrl, pgUsername, pgPassword));
+//        rc.registerInstances(new MagickChartBuilder("/dev/shm/im_chart/"));
 
         rc.registerClasses(Index.class);
         rc.registerClasses(ArtistController.class);
@@ -33,7 +37,6 @@ public class Main {
         rc.registerClasses(CoverController.class);
         rc.registerClasses(TagController.class);
         rc.registerClasses(ReleaseController.class);
-        rc.registerClasses(ChartController.class);
         rc.registerClasses(JacksonFeature.class);
 
         rc.registerClasses(MyExceptionMapper.class);

@@ -12,7 +12,7 @@ public class Index {
 
     private static final ApiInfo INFO = new ApiInfo(
             "music-graph-api",
-            "1.1",
+            "2.0",
             "/application.wadl",
             "https://github.com/simon987/music-graph-api"
     );

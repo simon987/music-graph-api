@@ -10,7 +10,7 @@ import java.util.logging.Logger;
 @Path("/cover/{mbid}")
 public class CoverController {
 
-    private static Logger logger = LogManager.getLogger();
+    private static final Logger logger = LogManager.getLogger();
 
     @Inject
     private ICoverArtDatabase db;

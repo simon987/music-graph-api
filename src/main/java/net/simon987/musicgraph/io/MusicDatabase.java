@@ -5,11 +5,11 @@ import com.google.common.collect.ImmutableList;
 import net.simon987.musicgraph.entities.*;
 import net.simon987.musicgraph.logging.LogManager;
 import net.simon987.musicgraph.webapi.AutoCompleteData;
-import net.simon987.musicgraph.webapi.AutocompleteLine;
+import net.simon987.musicgraph.entities.AutocompleteLine;
 import org.glassfish.jersey.internal.inject.AbstractBinder;
-import org.neo4j.driver.v1.*;
-import org.neo4j.driver.v1.types.Node;
-import org.neo4j.driver.v1.types.Relationship;
+import org.neo4j.driver.*;
+import org.neo4j.driver.types.Node;
+import org.neo4j.driver.types.Relationship;
 
 import javax.inject.Singleton;
 import javax.validation.constraints.Max;
@@ -37,10 +37,10 @@ public class MusicDatabase extends AbstractBinder {
                 AuthTokens.basic("neo4j", "neo4j"));
     }
 
-    private StatementResult query(Session session, String query, Map<String, Object> args) {
+    private Result query(Session session, String query, Map<String, Object> args) {
 
         long start = System.nanoTime();
-        StatementResult result = session.run(query, args);
+        Result result = session.run(query, args);
         long end = System.nanoTime();
         long took = (end - start) / 1000000;
 
@@ -57,7 +57,7 @@ public class MusicDatabase extends AbstractBinder {
             Map<String, Object> params = new HashMap<>();
             params.put("mbid", mbid);
 
-            StatementResult result = query(session,
+            Result result = query(session,
                     "MATCH (a:Artist)-[r:IS_MEMBER_OF]-(b:Artist) " +
                             "WHERE a.id = $mbid " +
                             "RETURN a as artist, a {rels: collect(DISTINCT r), nodes: collect(DISTINCT b)} as rank1 " +
@@ -82,7 +82,7 @@ public class MusicDatabase extends AbstractBinder {
 
         try (Session session = driver.session()) {
 
-            StatementResult result = query(session,
+            Result result = query(session,
                     "MATCH (a:Artist {id: $mbid})" +
                             "WITH a OPTIONAL MATCH (a)-[:CREDITED_FOR]->(r:Release) " +
                             "WITH collect({id: ID(r), mbid:r.id, name:r.name, year:r.year, labels:labels(r)}) as releases, a " +
@@ -163,7 +163,7 @@ public class MusicDatabase extends AbstractBinder {
             Map<String, Object> params = new HashMap<>();
             params.put("mbid", mbid);
 
-            StatementResult result = query(session,
+            Result result = query(session,
                     "MATCH (a:Artist) " +
                             "WHERE a.id = $mbid " +
                             "WITH a OPTIONAL MATCH (a)-[r:IS_RELATED_TO]-(b) " +
@@ -191,7 +191,7 @@ public class MusicDatabase extends AbstractBinder {
             params.put("idFrom", idFrom);
             params.put("idTo", idTo);
 
-            StatementResult result = query(session,
+            Result result = query(session,
                     "MATCH p = allShortestPaths(" +
                             "(:Artist {id: $idFrom})-[r:IS_RELATED_TO*..10]-(:Artist {id:$idTo})) " +
                             "WHERE ALL (rel in r WHERE rel.weight > 0.10) " +
@@ -220,7 +220,7 @@ public class MusicDatabase extends AbstractBinder {
             Map<String, Object> params = new HashMap<>();
             params.put("tag_id", id);
 
-            StatementResult result = query(session,
+            Result result = query(session,
                     "MATCH (t:Tag)-[r:IS_TAGGED]-(a:Artist) " +
                             "WHERE ID(t) = $tag_id " +
                             // Is rels really necessary?
@@ -250,7 +250,7 @@ public class MusicDatabase extends AbstractBinder {
             Map<String, Object> params = new HashMap<>();
             params.put("label_id", id);
 
-            StatementResult result = query(session,
+            Result result = query(session,
                     "MATCH (l:Label)-[]-(:Release)-[:CREDITED_FOR]-(a:Artist) " +
                             "WHERE ID(l) = $label_id " +
                             "RETURN l, {nodes: collect(DISTINCT a)} as rank1 " +
@@ -279,7 +279,7 @@ public class MusicDatabase extends AbstractBinder {
             Map<String, Object> params = new HashMap<>();
             params.put("label_id", id);
 
-            StatementResult result = query(session,
+            Result result = query(session,
                     "MATCH (l:Label)-[r:IS_RELATED_TO]-(l2:Label) " +
                             "WHERE ID(t) = $tag_id " +
                             "RETURN {rels: collect(DISTINCT r), nodes: collect(DISTINCT t2)} as rank1 " +
@@ -307,7 +307,7 @@ public class MusicDatabase extends AbstractBinder {
             Map<String, Object> params = new HashMap<>();
             params.put("tag_id", id);
 
-            StatementResult result = query(session,
+            Result result = query(session,
                     "MATCH (t:Tag)-[r:IS_RELATED_TO]-(t2:Tag) " +
                             "WHERE ID(t) = $tag_id " +
                             "RETURN {rels: collect(DISTINCT r), nodes: collect(DISTINCT t2)} as rank1 " +
@@ -329,7 +329,7 @@ public class MusicDatabase extends AbstractBinder {
     }
 
 
-    private void parseRelatedResult(StatementResult result, SearchResult out) {
+    private void parseRelatedResult(Result result, SearchResult out) {
         long start = System.nanoTime();
         if (result.hasNext()) {
             Record row = result.next();
@@ -416,7 +416,7 @@ public class MusicDatabase extends AbstractBinder {
         relation.source = rel.startNodeId();
         relation.target = rel.endNodeId();
         if (rel.containsKey("weight")) {
-            relation.weight = rel.get("weight").asFloat();
+            relation.weight = rel.get("weight").asDouble();
         }
 
         return relation;
@@ -429,7 +429,7 @@ public class MusicDatabase extends AbstractBinder {
 
         try (Session session = driver.session()) {
 
-            StatementResult result = query(session,
+            Result result = query(session,
                     "MATCH (release:Release {id: $mbid})-[:CREDITED_FOR]-(a:Artist) " +
                             "OPTIONAL MATCH (release)-[r:IS_TAGGED]->(t:Tag) " +
                             "RETURN release {name:release.name, year:release.year," +
@@ -478,7 +478,7 @@ public class MusicDatabase extends AbstractBinder {
 
             AutoCompleteData data = new AutoCompleteData();
 
-            StatementResult result = query(session,
+            Result result = query(session,
                     "MATCH (a:Artist) " +
                             "WHERE a.sortname STARTS WITH $prefix " +
                             "RETURN a ORDER BY a.listeners DESC " +
@@ -499,7 +499,7 @@ public class MusicDatabase extends AbstractBinder {
             }
 
             params.put("prefix", prefix.toLowerCase());
-            StatementResult tagResult = query(session,
+            Result tagResult = query(session,
                     "MATCH (t:Tag)-[:IS_TAGGED]-(:Artist) " +
                             "WHERE t.name STARTS WITH $prefix " +
                             "RETURN DISTINCT t ORDER BY t.occurrences DESC " +

@@ -11,6 +11,4 @@ public interface ICoverArtDatabase {
      * @throws Exception if unexpected error
      */
     byte[] getCover(String mbid) throws Exception;
-
-    HashMap<String, byte[]> getCovers(List<String> mbids) throws Exception;
 }

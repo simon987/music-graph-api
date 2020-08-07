@@ -1,5 +1,7 @@
 package net.simon987.musicgraph.webapi;
 
+import net.simon987.musicgraph.entities.AutocompleteLine;
+
 import java.util.ArrayList;
 import java.util.List;
 
