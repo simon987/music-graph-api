@@ -1,0 +1,13 @@
+version: "3"
+services:
+  mg_api:
+    image: simon987/music-graph-api
+    environment:
+      - "NEO4J_ADDR=localhost:7687"
+      - "PG_URL=localhost:5432/musicbrainz_db"
+      - "PG_USERNAME=musicbrainz"
+      - "PG_PASSWORD=musicbrainz"
+  mg_ui:
+    image: simon987/music-graph-ui
+    ports:
+      - 8080:80
