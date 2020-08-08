@@ -85,7 +85,7 @@ public class MusicDatabase extends AbstractBinder {
             Result result = query(session,
                     "MATCH (a:Artist {id: $mbid})" +
                             "WITH a OPTIONAL MATCH (a)-[:CREDITED_FOR]->(r:Release) " +
-                            "WITH collect({id: ID(r), mbid:r.id, name:r.name, year:r.year, labels:labels(r)}) as releases, a " +
+                            "WITH collect(DISTINCT {id: ID(r), mbid:r.id, name:r.name, year:r.year, labels:labels(r)}) as releases, a " +
                             "OPTIONAL MATCH (a)-[r:IS_TAGGED]->(t:Tag) " +
                             "WITH collect({weight: r.weight, name: t.name, id:ID(t), tagid:t.id}) as tags, a, releases " +
                             "OPTIONAL MATCH (a)-[r:CREDITED_FOR]->(:Release)-[]-(l:Label) " +
