@@ -1,6 +1,5 @@
 package net.simon987.musicgraph.io;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import net.simon987.musicgraph.entities.*;
 import net.simon987.musicgraph.logging.LogManager;
@@ -12,7 +11,6 @@ import org.neo4j.driver.types.Node;
 import org.neo4j.driver.types.Relationship;
 
 import javax.inject.Singleton;
-import javax.validation.constraints.Max;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -88,9 +86,11 @@ public class MusicDatabase extends AbstractBinder {
                             "WITH collect(DISTINCT {id: ID(r), mbid:r.id, name:r.name, year:r.year, labels:labels(r)}) as releases, a " +
                             "OPTIONAL MATCH (a)-[r:IS_TAGGED]->(t:Tag) " +
                             "WITH collect({weight: r.weight, name: t.name, id:ID(t), tagid:t.id}) as tags, a, releases " +
+                            "OPTIONAL MATCH (a)-[:REL_TRACK]->(tr:Track) " +
+                            "WITH collect({release:tr.album, name:tr.track, url:tr.url}) as tracks, a, releases, tags " +
                             "OPTIONAL MATCH (a)-[r:CREDITED_FOR]->(:Release)-[]-(l:Label) " +
                             "RETURN a {name:a.name, year:a.year, comment:a.comment, releases:releases, tags:tags," +
-                            " track_previews:a.track_previews, labels:collect(DISTINCT {id:ID(l),mbid:l.id,name:l.name})} " +
+                            " tracks:tracks, labels:collect(DISTINCT {id:ID(l),mbid:l.id,name:l.name})} " +
                             "LIMIT 1",
                     params);
 
@@ -140,13 +140,17 @@ public class MusicDatabase extends AbstractBinder {
                                     ))
                                     .collect(Collectors.toList())
                     );
-                    String preview_urls = (String) map.get("track_previews");
-                    if (preview_urls != null) {
-                        ObjectMapper mapper = new ObjectMapper();
-                        details.spotifyPreviewUrls = mapper.readValue(preview_urls, SpotifyPreviewUrl[].class);
-                    } else {
-                        details.spotifyPreviewUrls = new SpotifyPreviewUrl[0];
-                    }
+                    details.tracks.addAll(
+                            ((List<Map>) map.get("tracks"))
+                                    .stream()
+                                    .filter(x -> x.get("release") != null)
+                                    .map(x -> new SpotifyPreviewUrl(
+                                            (String) x.get("release"),
+                                            (String) x.get("name"),
+                                            (String) x.get("url")
+                                    ))
+                                    .collect(Collectors.toList())
+                    );
                 }
             } catch (Exception e) {
                 e.printStackTrace();

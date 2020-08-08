@@ -11,11 +11,12 @@ public class ArtistDetails {
     public List<Release> releases;
     public List<WeightedTag> tags;
     public List<Label> labels;
-    public SpotifyPreviewUrl[] spotifyPreviewUrls;
+    public List<SpotifyPreviewUrl> tracks;
 
     public ArtistDetails() {
         releases = new ArrayList<>();
         tags = new ArrayList<>();
         labels = new ArrayList<>();
+        tracks = new ArrayList<>();
     }
 }
