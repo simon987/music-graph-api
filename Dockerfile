@@ -13,4 +13,4 @@ ENV PG_PASSWORD "musicbrainz"
 
 COPY --from=build /app/target/music-graph-0.1-jar-with-dependencies.jar /app/
 WORKDIR /app/
-CMD ["java", "-jar", "/app/music-graph-0.1-jar-with-dependencies.jar"]
+CMD ["java", "-jar", "/app/music-graph-0.1-jar-with-dependencies.jar", "-Xms300m", "-Xmx300m"]
